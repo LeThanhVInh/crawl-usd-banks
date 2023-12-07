@@ -83,7 +83,7 @@ class DataTable extends Component {
     }
     Techcombank = async (result) =>//
     {
-        const res = await axios.get('https://thingproxy.freeboard.io/fetch/https://techcombank.com/api/data/exchange-rates?_sort=inputDate:desc,inputTime:desc&_limit=1');
+        const res = await axios.get('https://techcombank.com/api/data/exchange-rates?_sort=inputDate:desc,inputTime:desc&_limit=1');
         if (res.data != null) {
             result.DateExchange = res.data[0].inputDate;
 

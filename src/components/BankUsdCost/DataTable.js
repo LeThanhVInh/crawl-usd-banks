@@ -15,7 +15,7 @@ class DataTable extends Component {
             isLoading: false,
         }
     }
-    LoadDataList = () =>//
+    LoadDataList = async () =>//
     {
         this.setState({ isLoading: true });
 
@@ -83,7 +83,7 @@ class DataTable extends Component {
     }
     Techcombank = async (result) =>//
     {
-        const res = await axios.get('https://cors-anywhere.herokuapp.com/https://techcombank.com/api/data/exchange-rates?_sort=inputDate:desc,inputTime:desc&_limit=1');
+        const res = await axios.get('https://thingproxy.freeboard.io/fetch/https://techcombank.com/api/data/exchange-rates?_sort=inputDate:desc,inputTime:desc&_limit=1');
         if (res.data != null) {
             result.DateExchange = res.data[0].inputDate;
 
@@ -117,28 +117,34 @@ class DataTable extends Component {
     }
     MSB = async (result) =>//
     {
-        let date = new Date();
-        const res = await axios.get('https://www.msb.com.vn/o/headless-ratecur/v1.0/latest-currency?dateTime=' + (date.toISOString()).split('T')[0] + 'T03:05:00Z');
-        if (res.data != null) {
+        let dateStr = "";
+        {
+            const res = await axios.get('https://www.msb.com.vn/o/headless-ratecur/v1.0/latest-batch/600');
+            if (res.data != null) {
+                dateStr = res.data.items[0].dateTime;
+            }
+        }
 
-            res.data.items.some(item => {
-                if (item.currencyCode === "USD") {
-                    result.DateExchange = this.formatDate(date);
-                    result.TransferRate = (item.buyTransferVND);
-                    result.SellRate = (item.sellTransferVND);
-                    return true; // Breaks the loop
-                }
-                return false;
-            });
+        if (dateStr !== "") //
+        {
+            const res = await axios.get('https://www.msb.com.vn/o/headless-ratecur/v1.0/latest-currency?dateTime=' + dateStr);
+            if (res.data != null) {
+                res.data.items.some(item => {
+                    if (item.currencyCode === "USD") {
+
+                        const utcDate = new Date(dateStr);
+                        const localDate = new Date(utcDate.getTime() + (7 * 60 * 60 * 1000));
+
+                        result.DateExchange = localDate.toISOString();
+                        result.TransferRate = (item.buyTransferVND);
+                        result.SellRate = (item.sellTransferVND);
+                        return true; // Breaks the loop
+                    }
+                    return false;
+                });
+            }
         }
         return result;
-    }
-    formatDate = (date) => {
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear().toString(); // Get full year
-
-        return `${day}/${month}/${year}`;
     }
     rowRender = (i, data) =>//
     {

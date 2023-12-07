@@ -1,6 +1,7 @@
 import React from 'react';
 
 var linkApi = 'https://phanmemvas.vn:444';
+// var linkApi = 'http://localhost:64746';
 var headers =
 {
     headers:

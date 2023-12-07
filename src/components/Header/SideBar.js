@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 import router from '../../router/router';
 import Header from '../Header/header';
-import Overlay from '../common/overlay';
+import Overlay from '../_common/overlay';
 
 import '../../assets/animate/animate.min.css';
 

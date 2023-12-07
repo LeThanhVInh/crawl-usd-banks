@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Table, Button, Loader } from 'semantic-ui-react';
 
 import axios from 'axios';
-import constant, { numberWithCommas, RemoveCommas_Regex } from '../common/constant';
+import constant, { numberWithCommas, RemoveCommas_Regex } from '../_common/constant';
 
 
 class DataTable extends Component {
@@ -11,36 +11,54 @@ class DataTable extends Component {
         super(props);
         this.state =
         {
-            DataList: [],
+            DataListJson: [],
+            DataListJSX: [],
             isLoading: false,
         }
     }
+    componentDidUpdate(previousProps, previousState)//
+    {
+        if (previousProps.sortBy !== this.props.sortBy) {
+            this.setState({
+                DataListJson: this.state.DataListJson.map(item => {
+                    item.SellRate = parseFloat(item.SellRate);
+                    item.TransferRate = parseFloat(item.TransferRate);
+                    return item;
+                })
+            }, () => this.SortDataList());
+        }
+    }
+
     LoadDataList = async () =>//
     {
-        this.setState({ isLoading: true });
-
-        axios.get(constant.linkApi + '/BankUsdCost/getList', constant.headers)
+        this.setState({ isLoading: true, DataListJson: [], DataListJSX: [] });
+        const canGetTechcombank = await this.CheckTechcombank();
+        axios.get(constant.linkApi + '/BankUsdCost/getList?canGet=' + canGetTechcombank, constant.headers)
             .then(async res => {
                 if (res.data != null)//
                 {
-                    if (!res.data.IsError)//
+                    if (!res.data.IsError)// 
                     {
                         let i = 0;
-                        let successList = [];
+                        let successListJSX = [];
+                        let successListJson = [];
                         let errorList = [];
+
                         res.data.Data.forEach(async item => {
                             if (item.DateExchange !== null) {
                                 i++;
-                                successList.push(this.rowRender(i, item));
+                                successListJSX.push(this.rowRender(i, item));
+                                successListJson.push(item);
                             }
                             else
                                 errorList.push(item);
                         });
-                        successList = await this.LoadDataListExtend(successList, errorList);
+                        successListJSX = await this.LoadDataListExtend(successListJSX, successListJson, errorList);
 
                         this.setState({
                             isLoading: false,
-                            DataList: successList,
+                            DataListJSX: successListJSX,
+                            DataListJson: successListJson,
                         });
                     }
                     else
@@ -50,36 +68,67 @@ class DataTable extends Component {
                     this.setState({ isLoading: false });
             });
     }
-    LoadDataListExtend = async (successList, errorList) =>//
+    LoadDataListExtend = async (successListJSX, successListJson, errorList) =>//
     {
-        let i = successList.length;
+        let i = successListJSX.length;
         errorList.forEach(async item => {
             if (item.BankName === "Techcombank") {
                 let data = await this.Techcombank(item);
                 i++;
-                successList.push(this.rowRender(i, data));
-                this.setState({ DataList: successList });
+                successListJSX.push(this.rowRender(i, data));
+                successListJson.push(data);
+                this.setState({ DataListJSX: successListJSX, DataListJson: successListJson });
             }
             else if (item.BankName === "Bidv") {
                 let data = await this.Bidv(item);
                 i++;
-                successList.push(this.rowRender(i, data));
-                this.setState({ DataList: successList });
+                successListJSX.push(this.rowRender(i, data));
+                successListJson.push(data);
+                this.setState({ DataListJSX: successListJSX, DataListJson: successListJson });
             }
             else if (item.BankName === "MSB") {
                 let data = await this.MSB(item);
                 i++;
-                successList.push(this.rowRender(i, data));
-                this.setState({ DataList: successList });
+                successListJSX.push(this.rowRender(i, data));
+                successListJson.push(data);
+                this.setState({ DataListJSX: successListJSX, DataListJson: successListJson });
             }
             else {
                 i++;
-                successList.push(this.rowRender(i, item));
-                this.setState({ DataList: successList });
+                successListJSX.push(this.rowRender(i, item));
+                successListJson.push(item);
+                this.setState({ DataListJSX: successListJSX, DataListJson: successListJson });
             }
         });
 
-        return successList;
+        return successListJSX;
+    }
+    SortDataList = () =>//
+    {
+        this.setState({ isLoading: true, DataListJSX: [] });
+        let sortedItems = [];
+
+        if (this.props.sortBy === "sellASC") {
+            sortedItems = [].concat(this.state.DataListJson)
+                .sort((a, b) => parseFloat(a.SellRate) > parseFloat(b.SellRate) ? 1 : -1);
+        }
+        else if (this.props.sortBy === "buyASC") {
+            sortedItems = [].concat(this.state.DataListJson)
+                .sort((a, b) => parseFloat(a.TransferRate) > parseFloat(b.TransferRate) ? 1 : -1)
+        }
+        else if (this.props.sortBy === "sellDESC") {
+            sortedItems = [].concat(this.state.DataListJson)
+                .sort((a, b) => parseFloat(a.SellRate) < parseFloat(b.SellRate) ? 1 : -1);
+        }
+        else if (this.props.sortBy === "buyDESC") {
+            sortedItems = [].concat(this.state.DataListJson)
+                .sort((a, b) => parseFloat(a.TransferRate) < parseFloat(b.TransferRate) ? 1 : -1)
+        }
+
+        this.setState({
+            isLoading: false,
+            DataListJSX: sortedItems.map((item, i) => this.rowRender((i + 1), item))
+        });
     }
     Techcombank = async (result) =>//
     {
@@ -97,6 +146,12 @@ class DataTable extends Component {
             });
         }
         return result;
+    }
+    CheckTechcombank = async () => {
+        let res = await axios.get("https://cors-anywhere.herokuapp.com/https://techcombank.com/api/data/exchange-rates?_sort=inputDate:desc,inputTime:desc&_limit=1");
+        if (res.data != null)
+            return true;
+        return false;
     }
     Bidv = async (result) =>//
     {
@@ -146,11 +201,12 @@ class DataTable extends Component {
         }
         return result;
     }
+
     rowRender = (i, data) =>//
     {
         if (data.DateExchange === null) {
             return (
-                <Table.Row key={i}>
+                <Table.Row key={(new Date().getTime()) + i}>
                     <Table.Cell textAlign='center'>{i}</Table.Cell>
                     <Table.Cell><b>{data.BankName}</b></Table.Cell>
                     <Table.Cell textAlign='center'>Không lấy được</Table.Cell>
@@ -164,7 +220,7 @@ class DataTable extends Component {
         }
         else
             return (
-                <Table.Row key={i}>
+                <Table.Row key={(new Date().getTime()) + i}>
                     <Table.Cell textAlign='center'>{i}</Table.Cell>
                     <Table.Cell><b>{data.BankName}</b></Table.Cell>
                     <Table.Cell textAlign='center'>{data.DateExchange}</Table.Cell>
@@ -194,7 +250,7 @@ class DataTable extends Component {
                 </Table.Header>
 
                 <Table.Body>
-                    {this.state.DataList}
+                    {this.state.DataListJSX}
                 </Table.Body>
             </Table>
         );

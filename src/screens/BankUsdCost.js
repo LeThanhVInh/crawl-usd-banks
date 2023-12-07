@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Grid, Button, Icon, Header } from 'semantic-ui-react';
+import { Form, Button, Icon, Header, Dropdown } from 'semantic-ui-react';
 
 import DataTable from '../components/BankUsdCost/DataTable';
 
@@ -10,6 +10,7 @@ class BankUsdCost extends Component {
         super(props);
         this.state =
         {
+            sortBy: '',
         }
 
         this.DataTableRef = React.createRef();
@@ -23,21 +24,38 @@ class BankUsdCost extends Component {
         return (
             <React.Fragment>
                 <div style={{ margin: '18px 12px' }}>
-                    <Grid>
-                        <Grid.Row>
-                            <Grid.Column mobile={16} tablet={16} computer={8}>
+                    <Form as='div'>
+                        <Form.Group >
+                            <Form.Field  >
                                 <Header as='h3'>GIÁ USD CÁC NGÂN HÀNG</Header>
-                            </Grid.Column>
-                            <Grid.Column textAlign='right' mobile={16} tablet={16} computer={8}>
-                                <Button color='green' onClick={() => {
-                                    this.DataTableRef.current.LoadDataList();
-                                }}><Icon name='add' />LẤY GIÁ</Button>
-                            </Grid.Column>
-                        </Grid.Row>
-                    </Grid>
+                            </Form.Field>
+                        </Form.Group >
+                        <Form.Group >
+                            <Form.Field width={2} >
+                                <Button color='green' onClick={() => this.DataTableRef.current.LoadDataList()}>
+                                    <Icon name='add' />LẤY GIÁ
+                                </Button>
+                            </Form.Field>
+                            <Form.Field width={2} >
+                                <Dropdown
+                                    placeholder='Sắp xếp'
+                                    selection
+                                    value={this.state.sortBy}
+                                    options={[
+                                        { key: '0', value: '', text: '--Chọn--' },
+                                        { key: '1', value: 'buyASC', text: 'Giá mua tăng dần' },
+                                        { key: '2', value: 'sellASC', text: 'Giá bán tăng dần' },
+                                        { key: '2', value: 'buyDESC', text: 'Giá mua giảm dần' },
+                                        { key: '2', value: 'sellDESC', text: 'Giá bán giảm dần' },
+                                    ]}
+                                    onChange={(e, data) => this.setState({ sortBy: data.value })}
+                                />
+                            </Form.Field>
+                        </Form.Group>
+                    </Form>
                 </div>
                 <div className="my-table" >
-                    <DataTable ref={this.DataTableRef} />
+                    <DataTable ref={this.DataTableRef} sortBy={this.state.sortBy} />
                 </div>
             </React.Fragment>
         );

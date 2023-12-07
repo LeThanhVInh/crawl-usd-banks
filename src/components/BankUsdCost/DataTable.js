@@ -83,7 +83,7 @@ class DataTable extends Component {
     }
     Techcombank = async (result) =>//
     {
-        const res = await axios.get('https://techcombank.com/api/data/exchange-rates?_sort=inputDate:desc,inputTime:desc&_limit=1');
+        const res = await axios.get('https://cors-anywhere.herokuapp.com/https://techcombank.com/api/data/exchange-rates?_sort=inputDate:desc,inputTime:desc&_limit=1');
         if (res.data != null) {
             result.DateExchange = res.data[0].inputDate;
 

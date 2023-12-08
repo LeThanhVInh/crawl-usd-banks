@@ -132,19 +132,21 @@ class DataTable extends Component {
     }
     Techcombank = async (result) =>//
     {
-        const res = await axios.get('https://cors-anywhere.herokuapp.com/https://techcombank.com/api/data/exchange-rates?_sort=inputDate:desc,inputTime:desc&_limit=1');
-        if (res.data != null) {
-            result.DateExchange = res.data[0].inputDate;
+        try {
+            const res = await axios.get('https://cors-anywhere.herokuapp.com/https://techcombank.com/api/data/exchange-rates?_sort=inputDate:desc,inputTime:desc&_limit=1');
+            if (res.data != null) {
+                result.DateExchange = res.data[0].inputDate;
 
-            res.data[0].spotRate.some(item => {
-                if (item.label === "USD (50,100)") {
-                    result.TransferRate = item.bidRateCK;
-                    result.SellRate = item.askRate;
-                    return true; // Breaks the loop
-                }
-                return false;
-            });
-        }
+                res.data[0].spotRate.some(item => {
+                    if (item.label === "USD (50,100)") {
+                        result.TransferRate = item.bidRateCK;
+                        result.SellRate = item.askRate;
+                        return true; // Breaks the loop
+                    }
+                    return false;
+                });
+            }
+        } catch (e) { }
         return result;
     }
     CheckTechcombank = async () => {
@@ -157,50 +159,54 @@ class DataTable extends Component {
     }
     Bidv = async (result) =>//
     {
-        const res = await axios.get('https://bidv.com.vn/ServicesBIDV/ExchangeDetailServlet');
-        if (res.data != null) {
-            result.DateExchange = res.data.day_vi;
-
-            res.data.data.some(item => {
-                if (item.nameEN === "US Dollar") {
-                    result.TransferRate = RemoveCommas_Regex(item.muaCk);
-                    result.SellRate = RemoveCommas_Regex(item.ban);
-                    return true; // Breaks the loop
-                }
-                return false;
-            });
-        }
-        return result;
-    }
-    MSB = async (result) =>//
-    {
-        let dateStr = "";
-        {
-            const res = await axios.get('https://www.msb.com.vn/o/headless-ratecur/v1.0/latest-batch/600');
+        try {
+            const res = await axios.get('https://bidv.com.vn/ServicesBIDV/ExchangeDetailServlet');
             if (res.data != null) {
-                dateStr = res.data.items[0].dateTime;
-            }
-        }
+                result.DateExchange = res.data.day_vi;
 
-        if (dateStr !== "") //
-        {
-            const res = await axios.get('https://www.msb.com.vn/o/headless-ratecur/v1.0/latest-currency?dateTime=' + dateStr);
-            if (res.data != null) {
-                res.data.items.some(item => {
-                    if (item.currencyCode === "USD") {
-
-                        const utcDate = new Date(dateStr);
-                        const localDate = new Date(utcDate.getTime() + (7 * 60 * 60 * 1000));
-
-                        result.DateExchange = localDate.toISOString();
-                        result.TransferRate = (item.buyTransferVND);
-                        result.SellRate = (item.sellTransferVND);
+                res.data.data.some(item => {
+                    if (item.nameEN === "US Dollar") {
+                        result.TransferRate = RemoveCommas_Regex(item.muaCk);
+                        result.SellRate = RemoveCommas_Regex(item.ban);
                         return true; // Breaks the loop
                     }
                     return false;
                 });
             }
-        }
+        } catch (e) { }
+        return result;
+    }
+    MSB = async (result) =>//
+    {
+        try {
+            let dateStr = "";
+            {
+                const res = await axios.get('https://www.msb.com.vn/o/headless-ratecur/v1.0/latest-batch/600');
+                if (res.data != null) {
+                    dateStr = res.data.items[0].dateTime;
+                }
+            }
+
+            if (dateStr !== "") //
+            {
+                const res = await axios.get('https://www.msb.com.vn/o/headless-ratecur/v1.0/latest-currency?dateTime=' + dateStr);
+                if (res.data != null) {
+                    res.data.items.some(item => {
+                        if (item.currencyCode === "USD") {
+
+                            const utcDate = new Date(dateStr);
+                            const localDate = new Date(utcDate.getTime() + (7 * 60 * 60 * 1000));
+
+                            result.DateExchange = localDate.toISOString();
+                            result.TransferRate = (item.buyTransferVND);
+                            result.SellRate = (item.sellTransferVND);
+                            return true; // Breaks the loop
+                        }
+                        return false;
+                    });
+                }
+            }
+        } catch (e) { }
         return result;
     }
 

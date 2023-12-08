@@ -148,9 +148,11 @@ class DataTable extends Component {
         return result;
     }
     CheckTechcombank = async () => {
-        let res = await axios.get("https://cors-anywhere.herokuapp.com/https://techcombank.com/api/data/exchange-rates?_sort=inputDate:desc,inputTime:desc&_limit=1");
-        if (res.data != null)
-            return true;
+        try {
+            let res = await axios.get("https://cors-anywhere.herokuapp.com/https://techcombank.com/api/data/exchange-rates?_sort=inputDate:desc,inputTime:desc&_limit=1");
+            if (res.data != null)
+                return true;
+        } catch (e) { }
         return false;
     }
     Bidv = async (result) =>//

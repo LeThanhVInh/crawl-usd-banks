@@ -45,8 +45,8 @@ class BankUsdCost extends Component {
                                         { key: '0', value: '', text: '--Chọn--' },
                                         { key: '1', value: 'buyASC', text: 'Giá mua tăng dần' },
                                         { key: '2', value: 'sellASC', text: 'Giá bán tăng dần' },
-                                        { key: '2', value: 'buyDESC', text: 'Giá mua giảm dần' },
-                                        { key: '2', value: 'sellDESC', text: 'Giá bán giảm dần' },
+                                        { key: '3', value: 'buyDESC', text: 'Giá mua giảm dần' },
+                                        { key: '4', value: 'sellDESC', text: 'Giá bán giảm dần' },
                                     ]}
                                     onChange={(e, data) => this.setState({ sortBy: data.value })}
                                 />
